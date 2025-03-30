@@ -1,6 +1,6 @@
 import Header from "../templates/header";
 import Footer from '../templates/footer';
-import PixelGrid from "../templates/PixelGrid";
+import PixelGrid from '../templates/PixelGrid';
 
 const DreamsPage = () => {
    return (

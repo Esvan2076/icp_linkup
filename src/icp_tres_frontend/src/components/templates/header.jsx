@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { icp_tres_backend } from "../../../declarations/icp_tres_backend";
+import { icp_tres_backend } from "../../../../declarations/icp_tres_backend";
 import { useState } from "react";
 
 const Header = () => {
@@ -32,13 +32,6 @@ const Header = () => {
          </div>
 
          <div className="flex-none flex items-center gap-4">
-            {/* Botón para comprobar el estado de la API */}
-            <button
-               className="btn btn-secondary"
-               onClick={checkAPIHealth}
-            >
-               Verificar API
-            </button>
 
             <button className="btn btn-primary" onClick={() => navigate("/mentores")}>
                Mentores

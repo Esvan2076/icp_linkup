@@ -16,6 +16,7 @@
     "src/icp_tres_frontend"
   ],
   "dependencies": {
+    "@dfinity/auth-client": "^2.4.0",
     "@tailwindcss/vite": "^4.0.17",
     "daisyui": "^5.0.9",
     "react-router-dom": "^7.4.1",

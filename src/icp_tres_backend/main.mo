@@ -19,7 +19,7 @@ actor {
   var registros : List.List<Registro> = List.nil<Registro>();
 
   // Guardar múltiples registros (hasta 100 si no se puede indefinido)
-  public func guardarRegistros(datos : [Registro]) : async Text {
+  public func guardarDream(datos : [Registro]) : async Text {
     let maxRegistros = 1000;
     var contador = 0;
 
@@ -34,7 +34,7 @@ actor {
   };
 
   // Obtener todos los registros de golpe
-  public query func obtenerRegistros() : async [Registro] {
+  public query func obtenerDreams() : async [Registro] {
     return List.toArray(registros);
   };
 

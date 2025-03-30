@@ -1,9 +1,13 @@
 import React, { useState, useEffect } from "react";
+import { useDreams } from "../../hooks/useDreams";
+import { useSaveDream } from "../../hooks/useSaveDream";
 import Modal from "../atoms/Modal";
-import { guardarRegistros, obtenerRegistros } from "../services/registroService";
 
 const PixelGrid = ({ rows = 15, cols = 40 }) => {
-  // Estado para la cuadrícula inicial (solo cuadros vacíos)
+  const { dreams, loading, error } = useDreams();
+  const { saveDream, loading: saving, successMessage, error: saveError } = useSaveDream();
+
+  // Inicializar la cuadrícula con cuadros vacíos
   const [pixels, setPixels] = useState(
     Array.from({ length: rows * cols }).map((_, index) => ({
       token: `${index}`,
@@ -30,38 +34,29 @@ const PixelGrid = ({ rows = 15, cols = 40 }) => {
     y: 0,
   });
 
-  // Obtener píxeles guardados al cargar la página
+  // Llenar los cuadros desde el backend al cargar
   useEffect(() => {
-    const fetchPixels = async () => {
-      try {
-        const registrosGuardados = await obtenerRegistros();
-
-        if (registrosGuardados.length > 0) {
-          // Rellenar solo los cuadros guardados
-          const newPixels = [...pixels];
-          registrosGuardados.forEach((registro) => {
-            const index = parseInt(registro.token);
-            newPixels[index] = {
-              token: registro.token,
-              color: registro.color || "#ffffff",
-              name: registro.name || "Anónimo",
-              dream: registro.dream || "Sin mensaje",
-            };
-          });
-          setPixels(newPixels);
+    if (dreams.length > 0) {
+      const updatedPixels = [...pixels];
+      dreams.forEach((dream) => {
+        const index = parseInt(dream.token, 10); // Convierte el token a número
+        if (index < pixels.length) {
+          updatedPixels[index] = {
+            token: dream.token,
+            color: dream.color,
+            name: dream.name,
+            dream: dream.dream,
+          };
         }
-      } catch (error) {
-        console.error("Error al obtener los registros:", error);
-      }
-    };
-
-    fetchPixels();
-  }, [rows, cols]);
+      });
+      setPixels(updatedPixels);
+    }
+  }, [dreams]);
 
   // Abrir modal solo si el cuadro está vacío
   const openModal = (index) => {
     if (pixels[index].color !== "#ffffff") {
-      return; // Evitar cambiar si el cuadro está lleno
+      return; // Evitar cambiar si el cuadro ya está lleno
     }
     setSelectedPixel(index);
     setIsModalOpen(true);
@@ -78,54 +73,62 @@ const PixelGrid = ({ rows = 15, cols = 40 }) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  // Guardar datos y actualizar el píxel seleccionado
+  // Guardar datos y enviar al backend
   const handleSubmit = async (e) => {
     e.preventDefault();
     const newPixels = [...pixels];
-  
-    // Obtener cuadro modificado
     const updatedPixel = {
-      token: `${selectedPixel}`, // El token como string
-      color: formData.color.startsWith("#") ? formData.color : `#${formData.color}`, // Asegura que tenga #
+      token: `${selectedPixel}`,
       name: formData.name || "Anónimo",
       dream: formData.dream || "Sin mensaje",
+      color: formData.color.replace("#", ""), // Elimina el '#' antes de enviar
     };
-  
-    // Actualizar solo el cuadro seleccionado
-    newPixels[selectedPixel] = updatedPixel;
-    setPixels(newPixels);
-  
-    // Guardar el nuevo cuadro
-    try {
-      await guardarRegistros([updatedPixel]);
-      console.log(`✅ Cuadro guardado correctamente en la posición ${selectedPixel}`);
-    } catch (error) {
-      console.error("❌ Error al guardar el nuevo cuadro:", error);
-    }
-  
-    closeModal();
-  };  
 
-  // Mostrar tooltip al pasar el cursor por encima del cuadro
+    // Actualizar localmente el cuadro
+    newPixels[selectedPixel] = {
+      ...updatedPixel,
+      color: `#${updatedPixel.color}`, // Volver a agregar el '#' para mostrar
+    };
+    setPixels(newPixels);
+
+    // Enviar cuadro al backend
+    await saveDream(updatedPixel);
+    closeModal();
+  };
+
+  // Mostrar tooltip al pasar el cursor
   const showTooltip = (e, pixel) => {
     if (pixel.color !== "#ffffff") {
       setTooltip({
         visible: true,
         content: `${pixel.name}: ${pixel.dream}`,
-        x: e.clientX + 15,
-        y: e.clientY + 15,
+        x: e.clientX + 10,
+        y: e.clientY + 10,
       });
     }
   };
 
-  // Ocultar el tooltip al salir del cuadro
+  // Ocultar tooltip al salir del cuadro
   const hideTooltip = () => {
     setTooltip({ ...tooltip, visible: false });
   };
 
   return (
     <div className="flex flex-col items-center gap-4 p-4 relative">
-      {/* Cuadrícula de píxeles */}
+      {/* Mostrar mensaje mientras carga */}
+      {loading && <p className="text-gray-500">Cargando cuadros...</p>}
+      {error && (
+        <div className="text-red-500">
+          <p>Error al cargar los cuadros: {error}</p>
+        </div>
+      )}
+
+      {/* Mostrar mensaje de éxito o error al guardar */}
+      {saving && <p className="text-blue-500">Guardando sueño...</p>}
+      {successMessage && <p className="text-green-500">{successMessage}</p>}
+      {saveError && <p className="text-red-500">{saveError}</p>}
+
+      {/* Cuadrícula de cuadros */}
       <div
         className="grid gap-0.5 bg-neutral-300 p-1 rounded-md shadow-md relative"
         style={{
@@ -145,13 +148,13 @@ const PixelGrid = ({ rows = 15, cols = 40 }) => {
             onClick={() =>
               pixel.color === "#ffffff" ? openModal(index) : null
             }
-            onMouseEnter={(e) => pixel.color !== "#ffffff" && showTooltip(e, pixel)}
+            onMouseEnter={(e) => showTooltip(e, pixel)}
             onMouseLeave={hideTooltip}
           />
         ))}
       </div>
 
-      {/* Tooltip personalizado */}
+      {/* Tooltip cerca del cursor */}
       {tooltip.visible && (
         <div
           className="fixed z-50 bg-gray-800 text-white text-xs p-2 rounded-md shadow-lg"
@@ -164,9 +167,11 @@ const PixelGrid = ({ rows = 15, cols = 40 }) => {
         </div>
       )}
 
-      {/* Modal para ingresar datos */}
+      {/* Modal para agregar información */}
       <Modal isOpen={isModalOpen} closeModal={closeModal}>
-        <h2 className="text-xl font-bold mb-4 text-neutral">Configura tu cuadro 🎨</h2>
+        <h2 className="text-xl font-bold mb-4 text-neutral">
+          Configura tu cuadro 🎨
+        </h2>
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <input
             type="text"
