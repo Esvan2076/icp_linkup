@@ -1,6 +1,12 @@
 import { useState } from 'react';
 import { icp_tres_backend } from 'declarations/icp_tres_backend';
 
+// Importa el componente PixelGrid
+import PixelGrid from "./templates/PixelGrid";
+import Header from "./templates/header";
+import Footer from './templates/footer';
+import HomePage from "./pages/HomePage";
+
 function App() {
   const [greeting, setGreeting] = useState('');
 
@@ -14,11 +20,11 @@ function App() {
   }
 
   return (
-    <main>
-      <h1 class="text-3xl font-bold underline">
-        Hello world!
-      </h1>
-    </main>
+    <div>
+      <Header />
+      <HomePage />
+      <Footer />
+    </div>
   );
 }
 

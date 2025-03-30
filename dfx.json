@@ -1,9 +1,12 @@
+
 {
   "canisters": {
     "icp_tres_backend": {
       "main": "src/icp_tres_backend/main.mo",
-      "type": "motoko"
+      "type": "motoko",
+      "candid": "src/declarations/icp_tres_backend/icp_tres_backend.did"
     },
+
     "icp_tres_frontend": {
       "dependencies": [
         "icp_tres_backend"
@@ -13,7 +16,18 @@
       ],
       "type": "assets",
       "workspace": "icp_tres_frontend"
-    }
+    },
+      "internet_identity": {
+        "type": "custom",
+        "candid": "https://github.com/dfinity/internet-identity/releases/latest/download/internet_identity.did",
+        "wasm": "https://github.com/dfinity/internet-identity/releases/latest/download/internet_identity_dev.wasm.gz",
+        "remote": {
+          "id": {
+            "ic": "rdmx6-jaaaa-aaaaa-aaadq-cai"
+          }
+        },
+        "frontend": {}
+      }
   },
   "defaults": {
     "build": {
